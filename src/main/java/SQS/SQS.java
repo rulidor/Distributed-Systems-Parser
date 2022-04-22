@@ -22,12 +22,11 @@ public class SQS {
 
         // Perform various tasks on the Amazon SQS queue
         // create a new queue
-//        String queueName = "lidorqueue" + System.currentTimeMillis();
-//        String queueUrl= createQueue(sqsClient, queueName );
+        String queueName = "queueLocalAppAndManager";
+        String queueUrl= createQueue(sqsClient, queueName );
 
         // get all queues with prefix
         ListQueuesResponse listQueuesResponse = listQueues(sqsClient, "");
-
         String queue_name = "";
         String[] split_url;
         for (String url : listQueuesResponse.queueUrls()){
@@ -36,10 +35,10 @@ public class SQS {
             System.out.println("url: " + url);
             System.out.println("name: " + queue_name);
 //            sendMessage(sqsClient, url, "H5");
-            List<Message> messages = receiveMessages(sqsClient, url, 5);
-            deleteMessages(sqsClient, url, messages);
+//            List<Message> messages = receiveMessages(sqsClient, url, 5);
+//            System.out.println(messages.get(0).body());
+//            deleteMessages(sqsClient, url, messages);
 
-            System.out.println("deb");
             // delete queue by its name
 //            deleteSQSQueue(sqsClient, queue_name);
         }
@@ -61,7 +60,7 @@ public class SQS {
                 .build());
     }
 
-        public static String createQueue(SqsClient sqsClient, String queueName){
+    public static String createQueue(SqsClient sqsClient, String queueName){
         try {
             System.out.println("\nCreate Queue");
             // snippet-start:[sqs.java2.sqs_example.create_queue]

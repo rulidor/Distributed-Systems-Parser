@@ -21,6 +21,11 @@ import software.amazon.awssdk.services.ec2.model.*;
 import java.util.List;
 
 
+
+import software.amazon.awssdk.services.ec2.model.RunInstancesRequest;
+import software.amazon.awssdk.services.ec2.model.IamInstanceProfileSpecification;
+
+
 public class EC2 {
     public static void main(String[] args) {
         Region region = Region.US_WEST_2;
@@ -31,11 +36,11 @@ public class EC2 {
 //        ***createEC2Instance***
 //        String name = "xenial";
 //        String amiId = "ami-0688ba7eeeeefe3cd";
-//        String instanceId = createEC2Instance(ec2,name, amiId) ;
+//        String instanceId = createEC2Instance(ec2,name, amiId, "role", "manager") ;
 //        System.out.println("The Amazon EC2 Instance ID is "+instanceId);
 
 //        ***terminateInstance***
-//        terminateEC2(ec2, "i-0f13bc0d5211ecd5f");
+//        terminateEC2(ec2, "i-02fb79ff2b47e50a4");
 
 
 //        ***DescribeInstances***
@@ -43,8 +48,8 @@ public class EC2 {
 //
         describeEC2Instances( ec2);
 //        ec2.close();
-
-        describeEC2Tags(ec2, "i-0f13bc0d5211ecd5f");
+//
+//        describeEC2Tags(ec2, instanceId);
 
         ec2.close();
 
@@ -52,7 +57,7 @@ public class EC2 {
 
     // for list of available AMIs:
     // https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/finding-an-ami.html
-    public static String createEC2Instance(Ec2Client ec2,String name, String amiId, String roleTag) {
+    public static String createEC2Instance(Ec2Client ec2,String name, String amiId, String tagKey, String tagValue) {
 
         RunInstancesRequest runRequest = RunInstancesRequest.builder()
                 .imageId(amiId)
@@ -69,23 +74,28 @@ public class EC2 {
                 .value(name)
                 .build();
 
-        CreateTagsRequest tagRequest = CreateTagsRequest.builder()
+        CreateTagsRequest tagRequest1 = CreateTagsRequest.builder()
                 .resources(instanceId)
                 .tags(tag)
                 .build();
 
         tag = Tag.builder()
-                .key("Role")
-                .value("manager")
+                .key(tagKey)
+                .value(tagValue)
                 .build();
-        tagRequest = CreateTagsRequest.builder()
-                .resources("i-0f13bc0d5211ecd5f")
+
+        CreateTagsRequest tagRequest2 = CreateTagsRequest.builder()
+                .resources(instanceId)
                 .tags(tag)
                 .build();
-        ec2.createTags(tagRequest);
+
+        ec2.createTags(tagRequest1);
+        ec2.createTags(tagRequest2);
+
 
         try {
-            ec2.createTags(tagRequest);
+            ec2.createTags(tagRequest1);
+            ec2.createTags(tagRequest2);
             System.out.printf(
                     "Successfully started EC2 Instance %s based on AMI %s",
                     instanceId, amiId);
@@ -99,6 +109,68 @@ public class EC2 {
 
         return "";
     }
+
+//    todo: fix
+//    public static String createEC2ManagerInstance(Ec2Client ec2,String name, String amiId, String tagKey, String tagValue) {
+//        IamInstanceProfileSpecification iamInstanceProfile = IamInstanceProfileSpecification.builder()
+//                .name("LabInstanceProfile")
+//                .build();
+//
+//        RunInstancesRequest runRequest = RunInstancesRequest.builder()
+//                .imageId("ami-0ed9277fb7eb570c9")
+//                .instanceType(InstanceType.T1_MICRO)
+//                .maxCount(1)
+//                .minCount(1)
+//                .keyName("Management")
+//                .userData(encodedUserData)
+//                .securityGroups(securityGroups)
+//                .iamInstanceProfile(iamInstanceProfile)
+//                .tagSpecifications(myTags)
+//                .build();
+//
+//        RunInstancesResponse response = ec2.runInstances(runRequest);
+//        String instanceId = response.instances().get(0).instanceId();
+//
+//        Tag tag = Tag.builder()
+//                .key("Name")
+//                .value(name)
+//                .build();
+//
+//        CreateTagsRequest tagRequest1 = CreateTagsRequest.builder()
+//                .resources(instanceId)
+//                .tags(tag)
+//                .build();
+//
+//        tag = Tag.builder()
+//                .key(tagKey)
+//                .value(tagValue)
+//                .build();
+//
+//        CreateTagsRequest tagRequest2 = CreateTagsRequest.builder()
+//                .resources(instanceId)
+//                .tags(tag)
+//                .build();
+//
+//        ec2.createTags(tagRequest1);
+//        ec2.createTags(tagRequest2);
+//
+//
+//        try {
+//            ec2.createTags(tagRequest1);
+//            ec2.createTags(tagRequest2);
+//            System.out.printf(
+//                    "Successfully started EC2 Instance %s based on AMI %s",
+//                    instanceId, amiId);
+//
+//            return instanceId;
+//
+//        } catch (Ec2Exception e) {
+//            System.err.println(e.awsErrorDetails().errorMessage());
+//            System.exit(1);
+//        }
+//
+//        return "";
+//    }
 
     public static void describeEC2Instances( Ec2Client ec2){
 

@@ -3,19 +3,23 @@ package S3;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
+
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.S3Client;
+
+
 
 public class S3 {
 
     public static void main(String[] args) throws IOException {
-
         Region region = Region.US_WEST_2;
+
         S3Client s3 = S3Client.builder().region(region).build();
 
         String bucket = "bucket" + System.currentTimeMillis();
