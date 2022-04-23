@@ -35,7 +35,7 @@ public class SQS {
             System.out.println("url: " + url);
             System.out.println("name: " + queue_name);
 //            sendMessage(sqsClient, url, "H5");
-//            List<Message> messages = receiveMessages(sqsClient, url, 5);
+            List<Message> messages = receiveMessages(sqsClient, url, 5);
 //            System.out.println(messages.get(0).body());
 //            deleteMessages(sqsClient, url, messages);
 
@@ -102,8 +102,6 @@ public class SQS {
     }
 
     public static  List<Message> receiveMessages(SqsClient sqsClient, String queueUrl, int messagesNumber) {
-
-        System.out.println("\nReceive messages");
 
         try {
             // snippet-start:[sqs.java2.sqs_example.retrieve_messages]

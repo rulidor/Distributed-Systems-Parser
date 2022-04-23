@@ -34,7 +34,7 @@ public class EC2 {
                 .build();
 
 //        ***createEC2Instance***
-//        String name = "xenial";
+//        String name = "xenialLidor";
 //        String amiId = "ami-0688ba7eeeeefe3cd";
 //        String instanceId = createEC2Instance(ec2,name, amiId, "role", "manager") ;
 //        System.out.println("The Amazon EC2 Instance ID is "+instanceId);
@@ -44,6 +44,7 @@ public class EC2 {
 
 
 //        ***DescribeInstances***
+//        stopInstance(ec2, "i-0141790a795d538df");
 
 //
         describeEC2Instances( ec2);
