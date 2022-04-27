@@ -40,15 +40,13 @@ public class EC2 {
 //        System.out.println("The Amazon EC2 Instance ID is "+instanceId);
 
 //        ***terminateInstance***
-//        terminateEC2(ec2, "i-02fb79ff2b47e50a4");
+        terminateEC2(ec2, "i-0141790a795d538df");
+        terminateEC2(ec2, "i-0776a249bb84779ce");
 
-
-//        ***DescribeInstances***
 //        stopInstance(ec2, "i-0141790a795d538df");
 
-//
-        describeEC2Instances( ec2);
-//        ec2.close();
+//        ***DescribeInstances***
+        describeEC2Instances(ec2);
 //
 //        describeEC2Tags(ec2, instanceId);
 
@@ -187,12 +185,15 @@ public class EC2 {
                 System.out.println("describeEC2Instances:");
                 for (Reservation reservation : response.reservations()) {
                     for (Instance instance : reservation.instances()) {
+                        System.out.println("***");
                         System.out.println("Instance Id is " + instance.instanceId());
                         System.out.println("Image id is "+  instance.imageId());
                         System.out.println("Instance type is "+  instance.instanceType());
                         System.out.println("Instance state name is "+  instance.state().name());
                         System.out.println("monitoring information is "+  instance.monitoring().state());
-
+                        System.out.println("Instance tags:");
+                        describeEC2Tags(ec2, instance.instanceId());
+                        System.out.println("***");
                     }
                 }
                 nextToken = response.nextToken();

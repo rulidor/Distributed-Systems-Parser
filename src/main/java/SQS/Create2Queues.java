@@ -40,8 +40,10 @@ public class Create2Queues {
             System.out.println("url: " + url);
             System.out.println("name: " + queue_name);
 //            sendMessage(sqsClient, url, "H5");
-//            List<Message> messages = receiveMessages(sqsClient, url, 5);
-//            System.out.println(messages.get(0).body());
+            List<Message> messages = receiveMessages(sqsClient, url, 10);
+            for (Message msg : messages){
+                System.out.println(msg.body());
+            }
 //            deleteMessages(sqsClient, url, messages);
 
             // delete queue by its name
