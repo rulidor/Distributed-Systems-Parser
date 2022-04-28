@@ -18,7 +18,8 @@ import software.amazon.awssdk.services.s3.S3Client;
 public class S3 {
 
     public static void main(String[] args) throws IOException {
-        Region region = Region.US_WEST_2;
+//        Region region = Region.US_WEST_2;
+        Region region = Region.US_EAST_1;
 
         S3Client s3 = S3Client.builder().region(region).build();
 
@@ -73,14 +74,22 @@ public class S3 {
 
     public static void tutorialSetup(S3Client s3Client, String bucketName, Region region) {
         try {
+//            s3Client.createBucket(CreateBucketRequest
+//                    .builder()
+//                    .bucket(bucketName)
+//                    .createBucketConfiguration(
+//                            CreateBucketConfiguration.builder()
+//                                    .locationConstraint(region.id())
+//                                    .build())
+//                    .build());
             s3Client.createBucket(CreateBucketRequest
                     .builder()
                     .bucket(bucketName)
                     .createBucketConfiguration(
                             CreateBucketConfiguration.builder()
-                                    .locationConstraint(region.id())
                                     .build())
                     .build());
+
             System.out.println("Creating bucket: " + bucketName);
             s3Client.waiter().waitUntilBucketExists(HeadBucketRequest.builder()
                     .bucket(bucketName)

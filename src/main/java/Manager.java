@@ -6,7 +6,9 @@ import software.amazon.awssdk.services.ec2.model.*;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.SqsException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,7 +32,8 @@ class LocalAppHandler extends Thread {
     private String queueWorkersToManager;
     private Ec2Client ec2;
     private int MAX_INSTANCES = 11;
-    private Region region = Region.US_WEST_2;
+//    private Region region = Region.US_WEST_2;
+    private Region region = Region.US_EAST_1;
     private Map<String, Boolean> is_url_processed = new HashMap<>();
     public LocalAppHandler(Message msg, Manager manager, S3Client s3, SqsClient sqsClient, Ec2Client ec2,
                            String queueManagerToLocalApps, String queueManagerToWorkers, String queueWorkersToManager){
@@ -53,6 +56,7 @@ class LocalAppHandler extends Thread {
         }
         String input_file_bucket = msg_content.split("\\t")[0];
         int n = Integer.parseInt(msg_content.split("\\t")[1]); // workers’ files ratio (max files per worker)
+//        int n = 5;
 
         System.out.println("LocalAppHandler Downloading input file from S3 bucket: " + msg_content);
         String res_content = get_content_from_bucket(input_file_bucket);
@@ -70,7 +74,7 @@ class LocalAppHandler extends Thread {
         int workers_counter = workers_counters[0];
         int active_workers_counter = workers_counters[1];
 
-        int workers_needed_for_file = lines.length / n;
+        int workers_needed_for_file = (int) Math.ceil( Double.valueOf(lines.length) / Double.valueOf(n));
         int count_of_additional_workers_to_run = workers_needed_for_file - active_workers_counter;
 
         if (count_of_additional_workers_to_run > 0){
@@ -128,14 +132,23 @@ class LocalAppHandler extends Thread {
 
     public void tutorialSetup(String bucketName) {
         try {
+//            s3.createBucket(CreateBucketRequest
+//                    .builder()
+//                    .bucket(bucketName)
+//                    .createBucketConfiguration(
+//                            CreateBucketConfiguration.builder()
+//                                    .locationConstraint(region.id())
+//                                    .build())
+//                    .build());
+
             s3.createBucket(CreateBucketRequest
                     .builder()
                     .bucket(bucketName)
                     .createBucketConfiguration(
                             CreateBucketConfiguration.builder()
-                                    .locationConstraint(region.id())
                                     .build())
                     .build());
+
             System.out.println("Creating bucket: " + bucketName);
             s3.waiter().waitUntilBucketExists(HeadBucketRequest.builder()
                     .bucket(bucketName)
@@ -151,7 +164,8 @@ class LocalAppHandler extends Thread {
     private void create_additional_workers(int count_of_additional_workers_to_run) {
         for (int i=0; i < count_of_additional_workers_to_run; i++){
             System.out.println("LocalAppHandler: Creating a worker...");
-            createEC2Instance(ec2, "worker", "ami-0688ba7eeeeefe3cd", "role", "worker");
+//            createEC2Instance(ec2, "worker", "ami-0688ba7eeeeefe3cd", "role", "worker");
+            createEC2Instance(ec2, "worker", "ami-0f9fc25dd2506cf6d", "role", "worker");
             System.out.println("worker created.");
         }
 
@@ -244,22 +258,28 @@ class LocalAppHandler extends Thread {
     }
 }
 
+
 public class Manager {
-    private boolean terminateManager = false;
-    private String queueLocalAppsToManager = "https://sqs.us-west-2.amazonaws.com/862438553923/queueLocalAppsToManager";
-    private String queueManagerToLocalApps = "https://sqs.us-west-2.amazonaws.com/862438553923/queueManagerToLocalApps";
-    private String queueManagerToWorkers = "https://sqs.us-west-2.amazonaws.com/862438553923/queueManagerToWorkers";
-    private String queueWorkersToManager = "https://sqs.us-west-2.amazonaws.com/862438553923/queueWorkersToManager";
+    public static void main(String[] args) {
+        Manager manager = new Manager();
+        manager.runner();
+    }
+
+    private static boolean terminateManager = false;
+    private static String queueLocalAppsToManager = "https://sqs.us-east-1.amazonaws.com/862438553923/queueLocalAppsToManager";
+    private String queueManagerToLocalApps = "https://sqs.us-east-1.amazonaws.com/862438553923/queueManagerToLocalApps";
+    private String queueManagerToWorkers = "https://sqs.us-east-1.amazonaws.com/862438553923/queueManagerToWorkers";
+    private String queueWorkersToManager = "https://sqs.us-east-1.amazonaws.com/862438553923/queueWorkersToManager";
 
 
-
-    public void main(String[] args) {
-        Region region = Region.US_WEST_2;
+    public void runner() {
+//        Region region = Region.US_WEST_2;
+        Region region = Region.US_EAST_1;
         S3Client s3 = S3Client.builder().region(region).build();
 
 //        checks for new requests from local apps
         SqsClient sqs = SqsClient.builder()
-                .region(Region.US_WEST_2)
+                .region(Region.US_EAST_1)
                 .build();
 
         Ec2Client ec2 = Ec2Client.builder()
@@ -267,7 +287,8 @@ public class Manager {
                 .build();
 
         List<LocalAppHandler> handlers = new ArrayList<>();
-        while(terminateManager == true){
+        List<Message> handledMessages = new ArrayList<>();
+        while(terminateManager == false){
             try {
                 Thread.sleep(4000);
             } catch (InterruptedException e) {
@@ -275,10 +296,14 @@ public class Manager {
             }
             List<Message> messages = receiveMessages(sqs, queueLocalAppsToManager, 10);
             for (Message msg : messages){
+                if (handledMessages.contains(msg))
+                    continue;
 //                creates a new thread for every local app request
                 LocalAppHandler localAppHandler = new LocalAppHandler(msg, this, s3, sqs, ec2, queueManagerToLocalApps, queueManagerToWorkers, queueWorkersToManager);
                 localAppHandler.run();
                 handlers.add(localAppHandler);
+                deleteOneMessage(sqs, queueLocalAppsToManager, msg);
+                handledMessages.add(msg);
             }
         }
         //case: manager terminated
@@ -296,6 +321,22 @@ public class Manager {
 //        terminate manager
         terminateEC2(ec2, active_manager_id);
 
+    }
+
+    public static void deleteOneMessage(SqsClient sqsClient, String queueUrl,  Message message) {
+        System.out.println("\nDelete Message");
+        // snippet-start:[sqs.java2.sqs_example.delete_message]
+
+        try {
+                DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
+                        .queueUrl(queueUrl)
+                        .receiptHandle(message.receiptHandle())
+                        .build();
+                sqsClient.deleteMessage(deleteMessageRequest);
+        } catch (SqsException e) {
+            System.err.println(e.awsErrorDetails().errorMessage());
+            System.exit(1);
+        }
     }
 
     public void terminate(){

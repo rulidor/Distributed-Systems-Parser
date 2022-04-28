@@ -24,11 +24,12 @@ import static java.lang.Thread.sleep;
 public class LocalApp {
 
     public static void main(String[] args) {
-        //todo: update according to ars
+        //todo: update according to args
         int n = 5; // workers’ files ratio (max files per worker)
         boolean terminate = false;
 
-        Region region = Region.US_WEST_2;
+//        Region region = Region.US_WEST_2;
+        Region region = Region.US_EAST_1;
 
         System.out.println("local app running...");
 
@@ -56,12 +57,10 @@ public class LocalApp {
 
 // sending msg in SQS stating the location of the input file on S3
         SqsClient sqsClient = SqsClient.builder()
-                .region(Region.US_WEST_2)
+                .region(Region.US_EAST_1)
                 .build();
 
-//    queue name: queueLocalAppsToManager; url: https://sqs.us-west-2.amazonaws.com/862438553923/queueLocalAppsToManager
-//        queue name: queueManagerToLocalApps; url: https://sqs.us-west-2.amazonaws.com/862438553923/queueManagerToLocalApps
-        String queueWithManagerUrl = "https://sqs.us-west-2.amazonaws.com/862438553923/queueLocalAppsToManager";
+        String queueWithManagerUrl = "https://sqs.us-east-1.amazonaws.com/862438553923/queueLocalAppsToManager";
         SQS.SQS.sendMessage(sqsClient, queueWithManagerUrl, bucket + "\t" + n);
 
 //checking if there is an active manager
@@ -82,7 +81,7 @@ public class LocalApp {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            List<Message> messages = receiveMessages(sqsClient, "https://sqs.us-west-2.amazonaws.com/862438553923/queueManagerToLocalApps", 5);
+            List<Message> messages = receiveMessages(sqsClient, "https://sqs.us-east-1.amazonaws.com/862438553923/queueManagerToLocalApps", 5);
 //            msg template from manager to local app:
 //            "<local app bucket>\t<manager output bucket>"
             for (Message msg : messages){
@@ -205,7 +204,7 @@ public class LocalApp {
             System.exit(1);
         }
         System.out.println("There is no manager instance. Creating one...");
-        createEC2Instance(ec2, "manager", "ami-0688ba7eeeeefe3cd", "role", "manager");
+        createEC2Instance(ec2, "manager", "ami-0f9fc25dd2506cf6d", "role", "manager");
         System.out.println("Manager created.");
     }
 

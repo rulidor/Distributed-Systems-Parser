@@ -17,13 +17,13 @@ public class SQS {
     public static void main(String[] args){
 
         SqsClient sqsClient = SqsClient.builder()
-                .region(Region.US_WEST_2)
+                .region(Region.US_EAST_1)
                 .build();
 
         // Perform various tasks on the Amazon SQS queue
         // create a new queue
-        String queueName = "queueLocalAppAndManager";
-        String queueUrl= createQueue(sqsClient, queueName );
+//        String queueName = "testQueue";
+//        String queueUrl= createQueue(sqsClient, queueName );
 
         // get all queues with prefix
         ListQueuesResponse listQueuesResponse = listQueues(sqsClient, "");
@@ -35,12 +35,16 @@ public class SQS {
             System.out.println("url: " + url);
             System.out.println("name: " + queue_name);
 //            sendMessage(sqsClient, url, "H5");
-            List<Message> messages = receiveMessages(sqsClient, url, 5);
-//            System.out.println(messages.get(0).body());
-//            deleteMessages(sqsClient, url, messages);
+            List<Message> messages = receiveMessages(sqsClient, url, 10);
+            for (Message msg : messages)
+                System.out.println(msg.body());
+
+//            delete all messages from queue by its url
+//            PurgeQueueRequest purgeQueueRequest = PurgeQueueRequest.builder().queueUrl("https://sqs.us-west-2.amazonaws.com/862438553923/queueLocalAppsToManager").build();
+//            sqsClient.purgeQueue(purgeQueueRequest);
 
             // delete queue by its name
-//            deleteSQSQueue(sqsClient, queue_name);
+//            deleteSQSQueue(sqsClient, "queueLocalAppAndManager");
         }
 //
 //        // receive messages from a queue

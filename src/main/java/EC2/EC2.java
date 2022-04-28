@@ -28,7 +28,8 @@ import software.amazon.awssdk.services.ec2.model.IamInstanceProfileSpecification
 
 public class EC2 {
     public static void main(String[] args) {
-        Region region = Region.US_WEST_2;
+//        Region region = Region.US_WEST_2;
+        Region region = Region.US_EAST_1;
         Ec2Client ec2 = Ec2Client.builder()
                 .region(region)
                 .build();
@@ -40,8 +41,8 @@ public class EC2 {
 //        System.out.println("The Amazon EC2 Instance ID is "+instanceId);
 
 //        ***terminateInstance***
-        terminateEC2(ec2, "i-0141790a795d538df");
-        terminateEC2(ec2, "i-0776a249bb84779ce");
+//        terminateEC2(ec2, "i-0141790a795d538df");
+//        terminateEC2(ec2, "i-0776a249bb84779ce");
 
 //        stopInstance(ec2, "i-0141790a795d538df");
 
