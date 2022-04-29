@@ -28,7 +28,7 @@ public class TestClass {
 
         String fileName = "assignment1.jar";
         String filePath = "D:/Users/rulid/IdeaProjects/distributed systems course/assignment1/out/artifacts/assignment1_jar/" + fileName;
-// comment
+// comment1
         PutObjectRequest request = PutObjectRequest.builder()
                 .bucket(bucket).key(key).acl(ObjectCannedACL.PUBLIC_READ_WRITE).build();
 
