@@ -18,6 +18,9 @@ import software.amazon.awssdk.services.ec2.model.RebootInstancesRequest;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
+
+import java.io.*;
+import java.util.Base64;
 import java.util.List;
 
 
@@ -35,10 +38,10 @@ public class EC2 {
                 .build();
 
 //        ***createEC2Instance***
-//        String name = "xenialLidor";
-//        String amiId = "ami-0688ba7eeeeefe3cd";
-//        String instanceId = createEC2Instance(ec2,name, amiId, "role", "manager") ;
-//        System.out.println("The Amazon EC2 Instance ID is "+instanceId);
+        String name = "test8";
+        String amiId = "ami-04505e74c0741db8d";
+        String instanceId = createEC2Instance(ec2,name, amiId, "role", "manager") ;
+        System.out.println("The Amazon EC2 Instance ID is "+instanceId);
 
 //        ***terminateInstance***
 //        terminateEC2(ec2, "i-0141790a795d538df");
@@ -52,18 +55,35 @@ public class EC2 {
 //        describeEC2Tags(ec2, instanceId);
 
         ec2.close();
+    }
 
+    private static String getECSuserData() {
+        String userData = "";
+        userData += "wget https://www.gutenberg.org/files/1659/1659-0.txt -O a.txt";
+        String base64UserData = null;
+        try {
+            base64UserData = new String( Base64.getEncoder().encode(userData.getBytes( "UTF-8" )), "UTF-8" );
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return base64UserData;
     }
 
     // for list of available AMIs:
     // https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/finding-an-ami.html
     public static String createEC2Instance(Ec2Client ec2,String name, String amiId, String tagKey, String tagValue) {
 
+        IamInstanceProfileSpecification iamInstanceProfile = IamInstanceProfileSpecification.builder()
+                .name("LabInstanceProfile")
+                .build();
+
         RunInstancesRequest runRequest = RunInstancesRequest.builder()
                 .imageId(amiId)
                 .instanceType(InstanceType.T1_MICRO)
                 .maxCount(1)
                 .minCount(1)
+                .userData(getECSuserData())
+                .iamInstanceProfile(iamInstanceProfile)
                 .build();
 
         RunInstancesResponse response = ec2.runInstances(runRequest);

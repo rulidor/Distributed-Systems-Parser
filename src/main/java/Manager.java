@@ -77,11 +77,11 @@ class LocalAppHandler extends Thread {
         int workers_needed_for_file = (int) Math.ceil( Double.valueOf(lines.length) / Double.valueOf(n));
         int count_of_additional_workers_to_run = workers_needed_for_file - active_workers_counter;
 
-        if (count_of_additional_workers_to_run > 0){
-            if (workers_counter <= MAX_INSTANCES) { // AWS restriction
-                create_additional_workers(count_of_additional_workers_to_run);
-            }
-        }
+//        if (count_of_additional_workers_to_run > 0){
+//            if (workers_counter <= MAX_INSTANCES) { // AWS restriction
+//                create_additional_workers(count_of_additional_workers_to_run);
+//            }
+//        }
 
 //        waiting for workers to complete their job
         System.out.println("LocalAppHandler: waiting for workers to complete their job");

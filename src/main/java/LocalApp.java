@@ -1,3 +1,6 @@
+//try this ami:
+//ami-04505e74c0741db8d
+
 import EC2.EC2;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;

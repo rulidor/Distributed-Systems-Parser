@@ -23,22 +23,22 @@ public class S3 {
 
         S3Client s3 = S3Client.builder().region(region).build();
 
-        String bucket = "bucket" + System.currentTimeMillis();
+//        String bucket = "bucket" + System.currentTimeMillis();
         String key = "key";
-
-        tutorialSetup(s3, bucket, region);
-
-        System.out.println("Uploading object...");
+//
+//        tutorialSetup(s3, bucket, region);
+//
+//        System.out.println("Uploading object...");
 
 //        ***
 //uploading a file to the bucket
-        String fileName = "input-sample.txt";
-        String filePath = "" + fileName;
-
-        PutObjectRequest request = PutObjectRequest.builder()
-                .bucket(bucket).key(key).build();
-
-        s3.putObject(request, RequestBody.fromFile(new File(filePath)));
+//        String fileName = "input-sample.txt";
+//        String filePath = "" + fileName;
+//
+//        PutObjectRequest request = PutObjectRequest.builder()
+//                .bucket(bucket).key(key).build();
+//
+//        s3.putObject(request, RequestBody.fromFile(new File(filePath)));
 
 //        ***
 
@@ -47,12 +47,12 @@ public class S3 {
 //                        .build(),
 //                RequestBody.fromString("Testing with the {sdk-java}"));
 
-        System.out.println("Upload complete");
-        System.out.printf("%n");
+//        System.out.println("Upload complete");
+//        System.out.printf("%n");
 
 //        fetching data from bucket
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucket)
+                .bucket("test-jar-file-bucket")
                 .key(key)
                 .build();
 
@@ -62,7 +62,7 @@ public class S3 {
 
 
 
-        cleanUp(s3, bucket, key);
+//        cleanUp(s3, bucket, key);
 
         System.out.println("Closing the connection to {S3.S3}");
         s3.close();
@@ -82,13 +82,23 @@ public class S3 {
 //                                    .locationConstraint(region.id())
 //                                    .build())
 //                    .build());
-            s3Client.createBucket(CreateBucketRequest
-                    .builder()
+//            s3Client.createBucket(CreateBucketRequest
+//                    .builder()
+//                    .bucket(bucketName)
+//                    .createBucketConfiguration(
+//                            CreateBucketConfiguration.builder()
+//                                    .build())
+//                    .build());
+
+            s3Client.createBucket(CreateBucketRequest.builder()
                     .bucket(bucketName)
-                    .createBucketConfiguration(
-                            CreateBucketConfiguration.builder()
-                                    .build())
-                    .build());
+                            .createBucketConfiguration(CreateBucketConfiguration.builder().build())
+                    .acl(BucketCannedACL.PUBLIC_READ_WRITE).build());
+
+//            CreateBucketRequest request = CreateBucketRequest.builder()
+//                    .bucket(bucketName)
+//                    .acl(BucketCannedACL.PUBLIC_READ).build();
+//            client.createBucket(request);
 
             System.out.println("Creating bucket: " + bucketName);
             s3Client.waiter().waitUntilBucketExists(HeadBucketRequest.builder()
