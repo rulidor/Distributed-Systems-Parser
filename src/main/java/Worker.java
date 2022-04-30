@@ -3,6 +3,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.BucketCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -57,9 +58,30 @@ public class Worker {
 
 //                Perform the requested analysis on the file
                     String output_file_path = "output_" + System.currentTimeMillis() + ".txt";
+                    switch (parsing_method){
+                        case "POS":
+                            parsing_method = "wordsAndTags";
+                            break;
+                        case "CONSTITUENCY":
+                            parsing_method = "penn";
+                            break;
+                        case "DEPENDENCY":
+                            parsing_method = "typedDependencies";
+                    }
                     String res = Parser.parse_into_file(parsing_method,output_file_path, input_file_path);
+
                     if (! res.toLowerCase().equals("success")){  //case: exception while parsing
                         System.out.println("worker: exception while parsing: " + res);
+                        switch (parsing_method){
+                            case "wordsAndTags":
+                                parsing_method = "POS";
+                                break;
+                            case "penn":
+                                parsing_method = "CONSTITUENCY";
+                                break;
+                            case "typedDependencies":
+                                parsing_method = "DEPENDENCY";
+                        }
                         SQS.SQS.sendMessage(sqs, queueWorkersToManager, "exception: " + res + "\t" + parsing_method + "\t" + text_url);
                         deleteOneMessage(sqs, queueManagerToWorkers, msg);
                         continue;
@@ -67,22 +89,26 @@ public class Worker {
 
 //                    Upload the resulting analysis file to S3
                     String bucket = "bucket" + System.currentTimeMillis();
-                    String key = "parsedfile";
-
+                    String key = "key";
                     tutorialSetup(s3, bucket, region);
 
-                    System.out.println("Uploading input file to S3...");
-
 //uploading a file to the bucket
-                    String fileName = "input-sample.txt";
-                    String filePath = "" + fileName;
-
                     PutObjectRequest request = PutObjectRequest.builder()
-                            .bucket(bucket).key(key).build();
+                            .bucket(bucket).acl(String.valueOf(BucketCannedACL.PUBLIC_READ_WRITE)).key(key).build();
+                    s3.putObject(request, RequestBody.fromFile(new File(output_file_path)));
 
-                    s3.putObject(request, RequestBody.fromFile(new File(filePath)));
+                    switch (parsing_method){
+                        case "wordsAndTags":
+                            parsing_method = "POS";
+                            break;
+                        case "penn":
+                            parsing_method = "CONSTITUENCY";
+                            break;
+                        case "typedDependencies":
+                            parsing_method = "DEPENDENCY";
+                    }
 
-                    System.out.println("Upload complete.");
+                    SQS.SQS.sendMessage(sqs, queueWorkersToManager, bucket + "\t" + parsing_method + "\t" + text_url);
 
 //                only when finished job or when there is an exception, delete the message
                     deleteOneMessage(sqs, queueManagerToWorkers, msg);
@@ -93,6 +119,16 @@ public class Worker {
                 // the input message that caused the exception together with a short description of the
                 // exception, and continue working on the next message
                 System.out.println("worker: exception: " + e.getMessage());
+                switch (parsing_method){
+                    case "wordsAndTags":
+                        parsing_method = "POS";
+                        break;
+                    case "penn":
+                        parsing_method = "CONSTITUENCY";
+                        break;
+                    case "typedDependencies":
+                        parsing_method = "DEPENDENCY";
+                }
                 SQS.SQS.sendMessage(sqs, queueWorkersToManager, "exception: " + e.getMessage() + "\t" + parsing_method + "\t" + text_url);
                 if (curr_msg != null)
                     deleteOneMessage(sqs, queueManagerToWorkers, curr_msg);

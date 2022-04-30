@@ -9,14 +9,14 @@ import java.io.File;
 
 import static S3.S3.tutorialSetup;
 
-public class TestClass {
+public class JarUploader {
 
     public static void main(String[] args){
         Region region = Region.US_EAST_1;
 
-        System.out.println("local app running...");
+        System.out.println("uploading jar...");
 
-        System.out.println("setting up a bucket for input file...");
+        System.out.println("setting up a bucket...");
         S3Client s3 = S3Client.builder().region(region).build();
 
         String bucket = "manager-jar-v2";
@@ -38,7 +38,7 @@ public class TestClass {
 //                .build(),
 //        RequestBody.fromString("Testing!"));
 
-        System.out.println("Uploadddddddddd.");
+        System.out.println("Upload completed.");
 
         s3.close();
 

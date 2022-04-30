@@ -18,7 +18,14 @@ public class Parser {
 
 //    parsing_method = wordsAndTags (=POS) or penn (=CONSTITUENCY) or typedDependencies (=DEPENDENCY)
     public static String parse_into_file(String parsing_method, String output_file_path, String input_file_path){
-        String englishPCFG_path = "englishPCFG.ser.gz";
+//        todo: change this debug
+//        String englishPCFG_path = "englishPCFG.ser.gz";
+        String englishPCFG_path = "D:\\Users\\rulid\\stanford parser\\stanford-parser-full-2020-11-17\\englishPCFG.ser.gz";
+        input_file_path = "input_1651354060431.txt";
+
+
+
+
         try {
             LexicalizedParser lexicalizedParser = LexicalizedParser.loadModel(englishPCFG_path);
             File input_file = new File(input_file_path);

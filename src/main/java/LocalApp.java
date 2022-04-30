@@ -8,6 +8,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.BucketCannedACL;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -21,6 +22,7 @@ import java.util.List;
 import static S3.S3.cleanUp;
 import static S3.S3.tutorialSetup;
 import static EC2.EC2.createEC2Instance;
+import static SQS.SQS.deleteOneMessage;
 import static SQS.SQS.receiveMessages;
 import static java.lang.Thread.sleep;
 
@@ -47,11 +49,11 @@ public class LocalApp {
         System.out.println("Uploading input file to S3...");
 
 //uploading a file to the bucket
-        String fileName = "input-sample.txt";
+        String fileName = "input-sample2.txt"; //todo change
         String filePath = "" + fileName;
 
         PutObjectRequest request = PutObjectRequest.builder()
-                .bucket(bucket).key(key).build();
+                .bucket(bucket).acl(String.valueOf(BucketCannedACL.PUBLIC_READ_WRITE)).key(key).build();
 
         s3.putObject(request, RequestBody.fromFile(new File(filePath)));
 
@@ -63,8 +65,8 @@ public class LocalApp {
                 .region(Region.US_EAST_1)
                 .build();
 
-        String queueWithManagerUrl = "https://sqs.us-east-1.amazonaws.com/862438553923/queueLocalAppsToManager";
-        SQS.SQS.sendMessage(sqsClient, queueWithManagerUrl, bucket + "\t" + n);
+        String queueLocalAppsToManager = "https://sqs.us-east-1.amazonaws.com/862438553923/queueLocalAppsToManager";
+        SQS.SQS.sendMessage(sqsClient, queueLocalAppsToManager, bucket + "\t" + n);
 
 //checking if there is an active manager
         Ec2Client ec2 = Ec2Client.builder()
@@ -84,12 +86,14 @@ public class LocalApp {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            List<Message> messages = receiveMessages(sqsClient, "https://sqs.us-east-1.amazonaws.com/862438553923/queueManagerToLocalApps", 5);
+            String queueManagerToLocalApps = "https://sqs.us-east-1.amazonaws.com/862438553923/queueManagerToLocalApps";
+            List<Message> messages = receiveMessages(sqsClient, queueManagerToLocalApps, 5);
 //            msg template from manager to local app:
 //            "<local app bucket>\t<manager output bucket>"
             for (Message msg : messages){
                 if (msg.body().contains(bucket)){
                     res_bucket = msg.body().split("\\t")[1];
+                    deleteOneMessage(sqsClient, queueManagerToLocalApps, msg);
                     while_flag = false;
                     break;
                 }
@@ -100,7 +104,7 @@ public class LocalApp {
 
         System.out.println("Downloading summary file from S3...");
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucket)
+                .bucket(res_bucket)
                 .key(key)
                 .build();
 
@@ -140,7 +144,7 @@ public class LocalApp {
         }
 
         if(terminate == true){
-            SQS.SQS.sendMessage(sqsClient, queueWithManagerUrl, "terminate");
+            SQS.SQS.sendMessage(sqsClient, queueLocalAppsToManager, "terminate");
         }
 
         System.out.println("Local app finished - exits.");

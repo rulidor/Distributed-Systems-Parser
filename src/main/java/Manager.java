@@ -170,6 +170,8 @@ class LocalAppHandler extends Thread {
             }
             List<Message> messages = receiveMessages(sqsClient, queueWorkersToManager, 10);
             for (Message msg : messages){
+                System.out.println("LocalAppHandler: received a message from a worker.");
+                System.out.println("LocalAppHandler: msg body: " + msg.body());
                 String[] msg_splitted = msg.body().split("\\t");
                 String bucket_of_analysis_output = msg_splitted[0];
                 String analysis_type = msg_splitted[1];
@@ -182,9 +184,14 @@ class LocalAppHandler extends Thread {
                     String link_to_output_analyzed_file = "";
                     if (bucket_of_analysis_output.toLowerCase().contains("exception:"))
                         link_to_output_analyzed_file = bucket_of_analysis_output;
-                    else
-                        link_to_output_analyzed_file = get_content_from_bucket(bucket_of_analysis_output);
-                    output += analysis_type + "\t" + ":\t" + url_input_file + "\t" + link_to_output_analyzed_file + "\n";
+                    else {
+                    // inserting the output file url to the summary file
+//                        link_to_output_analyzed_file = get_content_from_bucket(bucket_of_analysis_output);
+                        GetUrlRequest request = GetUrlRequest.builder().bucket(bucket_of_analysis_output).key("key").build();
+                        link_to_output_analyzed_file = s3.utilities().getUrl(request).toExternalForm();
+                    }
+                    System.out.println("LocalAppHandler: link_to_output_analyzed_file:" + link_to_output_analyzed_file);
+                    output += analysis_type + ":\t" + url_input_file + "\t" + link_to_output_analyzed_file + "\n";
                 }
                 if (url_processed_counter == is_url_processed.keySet().size()){
                     is_all_urls_processed = true;
@@ -201,6 +208,7 @@ class LocalAppHandler extends Thread {
         s3.putObject(PutObjectRequest.builder().bucket(bucket_of_response).key(key)
                         .build(),
                 RequestBody.fromString(output));
+        System.out.println("LocalAppHandler: output is: " + output);
 
 //        send msg to local app via SQS
         SQS.SQS.sendMessage(sqsClient, queueManagerToLocalApps, input_file_bucket + "\t" + bucket_of_response);
@@ -414,9 +422,11 @@ public class Manager {
 //                creates a new thread for every local app request
                 LocalAppHandler localAppHandler = new LocalAppHandler(msg, this, s3, sqs, ec2, queueManagerToLocalApps, queueManagerToWorkers, queueWorkersToManager);
                 System.out.println("manager running a local app handler.");
-                localAppHandler.run();
+//                localAppHandler.run();
+                localAppHandler.start();
                 if (is_WorkersStatusChecker_running == false){
-                    workersStatusChecker.run();
+//                    workersStatusChecker.run();
+                    workersStatusChecker.start();
                     handlers.add(workersStatusChecker);
                     is_WorkersStatusChecker_running = true;
                 }
