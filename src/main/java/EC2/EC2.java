@@ -38,10 +38,10 @@ public class EC2 {
                 .build();
 
 //        ***createEC2Instance***
-        String name = "test8";
-        String amiId = "ami-04505e74c0741db8d";
-        String instanceId = createEC2Instance(ec2,name, amiId, "role", "manager") ;
-        System.out.println("The Amazon EC2 Instance ID is "+instanceId);
+//        String name = "test8";
+//        String amiId = "ami-04505e74c0741db8d";
+//        String instanceId = createEC2Instance(ec2,name, amiId, "role", "manager") ;
+//        System.out.println("The Amazon EC2 Instance ID is "+instanceId);
 
 //        ***terminateInstance***
 //        terminateEC2(ec2, "i-0141790a795d538df");
@@ -57,9 +57,30 @@ public class EC2 {
         ec2.close();
     }
 
-    private static String getECSuserData() {
+    private static String getEC2userDataForWorker(String jar_bucket_name) {
         String userData = "";
-        userData += "wget https://www.gutenberg.org/files/1659/1659-0.txt -O a.txt";
+        userData += "#!/bin/bash\n";
+        userData += "sudo apt-get update";
+        userData += "sudo apt install default-jre -y";
+        userData += "wget https://www.gutenberg.org/files/1659/1659-0.txt -O a.txt\n"; //todo: put worker jar
+        String base64UserData = null;
+        try {
+            base64UserData = new String( Base64.getEncoder().encode(userData.getBytes( "UTF-8" )), "UTF-8" );
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return base64UserData;
+    }
+
+    private static String getEC2userDataForManager(String jar_bucket_name) {
+        String userData = "";
+        userData += "#!/bin/bash\n";
+        userData += "sudo apt-get update\n";
+        userData += "sudo apt install default-jre -y\n";
+        userData += "wget https://" + jar_bucket_name + ".s3.amazonaws.com/key -O manager.jar\n"; //todo: put manager jar
+        userData += "cd ..\n";
+        userData += "cd ..\n";
+        userData += "java -jar manager.jar\n";
         String base64UserData = null;
         try {
             base64UserData = new String( Base64.getEncoder().encode(userData.getBytes( "UTF-8" )), "UTF-8" );
@@ -71,18 +92,28 @@ public class EC2 {
 
     // for list of available AMIs:
     // https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/finding-an-ami.html
-    public static String createEC2Instance(Ec2Client ec2,String name, String amiId, String tagKey, String tagValue) {
+    public static String createEC2Instance(Ec2Client ec2,String name, String amiId, String tagKey, String tagValue, String jar_bucket_name) {
 
         IamInstanceProfileSpecification iamInstanceProfile = IamInstanceProfileSpecification.builder()
                 .name("LabInstanceProfile")
                 .build();
+
+        String user_data = "";
+        if (tagValue.toLowerCase().equals("manager"))
+            user_data = getEC2userDataForManager(jar_bucket_name);
+        else if (tagValue.toLowerCase().equals("worker"))
+            user_data = getEC2userDataForWorker(jar_bucket_name);
+        else {
+            System.err.println("EC2 role must be either manager or worker.");
+            System.exit(1);
+        }
 
         RunInstancesRequest runRequest = RunInstancesRequest.builder()
                 .imageId(amiId)
                 .instanceType(InstanceType.T1_MICRO)
                 .maxCount(1)
                 .minCount(1)
-                .userData(getECSuserData())
+                .userData(user_data)
                 .iamInstanceProfile(iamInstanceProfile)
                 .build();
 

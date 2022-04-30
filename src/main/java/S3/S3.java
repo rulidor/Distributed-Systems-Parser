@@ -51,14 +51,14 @@ public class S3 {
 //        System.out.printf("%n");
 
 //        fetching data from bucket
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket("test-jar-file-bucket")
-                .key(key)
-                .build();
+//        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+//                .bucket("test-jar-file-bucket")
+//                .key(key)
+//                .build();
 
-        ResponseInputStream<GetObjectResponse> responseInputStream = s3.getObject(getObjectRequest);
-        InputStream stream = new ByteArrayInputStream(responseInputStream.readAllBytes());
-        System.out.println("Content: "+ new String(stream.readAllBytes(), StandardCharsets.UTF_8));
+//        ResponseInputStream<GetObjectResponse> responseInputStream = s3.getObject(getObjectRequest);
+//        InputStream stream = new ByteArrayInputStream(responseInputStream.readAllBytes());
+//        System.out.println("Content: "+ new String(stream.readAllBytes(), StandardCharsets.UTF_8));
 
 
 
@@ -111,6 +111,54 @@ public class S3 {
             System.exit(1);
         }
     }
+
+    public static void printAllBucketsNames(S3Client s3){
+        ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
+        ListBucketsResponse listBucketsResponse = s3.listBuckets(listBucketsRequest);
+        listBucketsResponse.buckets().stream().forEach(x -> System.out.println(x.name()));
+    }
+
+
+//    danger - deleting all buckets!
+    public static void DeleteAllBuckets(S3Client s3){
+        ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
+        ListBucketsResponse listBucketsResponse = s3.listBuckets(listBucketsRequest);
+        listBucketsResponse.buckets().stream().forEach(x -> DeleteBucketCompletely(s3, x.name()));
+    }
+
+
+    public static void DeleteBucketCompletely(S3Client s3, String bucket) {
+        System.out.println("DeleteBucketCompletely running.");
+        try {
+            // To delete a bucket, all the objects in the bucket must be deleted first
+            ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder().bucket(bucket).build();
+            ListObjectsV2Response listObjectsV2Response;
+
+            do {
+                listObjectsV2Response = s3.listObjectsV2(listObjectsV2Request);
+                for (S3Object s3Object : listObjectsV2Response.contents()) {
+                    s3.deleteObject(DeleteObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(s3Object.key())
+                            .build());
+                }
+
+                listObjectsV2Request = ListObjectsV2Request.builder().bucket(bucket)
+                        .continuationToken(listObjectsV2Response.nextContinuationToken())
+                        .build();
+
+            } while(listObjectsV2Response.isTruncated());
+            // snippet-end:[s3.java2.s3_bucket_ops.delete_bucket]
+
+            DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder().bucket(bucket).build();
+            s3.deleteBucket(deleteBucketRequest);
+
+        } catch (S3Exception e) {
+            System.err.println(e.awsErrorDetails().errorMessage());
+            System.exit(1);
+        }
+    }
+
 
     public static void cleanUp(S3Client s3Client, String bucketName, String keyName) {
         System.out.println("Cleaning up...");

@@ -207,7 +207,7 @@ public class LocalApp {
             System.exit(1);
         }
         System.out.println("There is no manager instance. Creating one...");
-        createEC2Instance(ec2, "manager", "ami-0f9fc25dd2506cf6d", "role", "manager");
+        createEC2Instance(ec2, "manager", "ami-04505e74c0741db8d", "role", "manager", "manager-jar-v2");
         System.out.println("Manager created.");
     }
 

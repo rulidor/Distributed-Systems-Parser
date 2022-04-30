@@ -105,6 +105,22 @@ public class SQS {
         return null;
     }
 
+    public static void deleteOneMessage(SqsClient sqsClient, String queueUrl,  Message message) {
+        System.out.println("\nDelete Message");
+        // snippet-start:[sqs.java2.sqs_example.delete_message]
+
+        try {
+            DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
+                    .queueUrl(queueUrl)
+                    .receiptHandle(message.receiptHandle())
+                    .build();
+            sqsClient.deleteMessage(deleteMessageRequest);
+        } catch (SqsException e) {
+            System.err.println(e.awsErrorDetails().errorMessage());
+            System.exit(1);
+        }
+    }
+
     public static  List<Message> receiveMessages(SqsClient sqsClient, String queueUrl, int messagesNumber) {
 
         try {

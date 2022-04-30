@@ -19,14 +19,14 @@ public class TestClass {
         System.out.println("setting up a bucket for input file...");
         S3Client s3 = S3Client.builder().region(region).build();
 
-        String bucket = "bucketnum13";
+        String bucket = "manager-jar-v2";
         String key = "key";
 
         tutorialSetup(s3, bucket, region);
 
         System.out.println("Uploading input file to S3...");
 
-        String fileName = "assignment1.jar";
+        String fileName = "manager.jar";
         String filePath = "D:/Users/rulid/IdeaProjects/distributed systems course/assignment1/out/artifacts/assignment1_jar/" + fileName;
 // comment1
         PutObjectRequest request = PutObjectRequest.builder()
