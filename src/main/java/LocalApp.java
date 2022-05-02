@@ -30,7 +30,7 @@ public class LocalApp {
 
     public static void main(String[] args) {
         //todo: update according to args
-        int n = 5; // workers’ files ratio (max files per worker)
+        int n = 1; // workers’ files ratio (max files per worker)
         boolean terminate = false;
 
 //        Region region = Region.US_WEST_2;

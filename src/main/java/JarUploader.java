@@ -20,6 +20,8 @@ public class JarUploader {
         S3Client s3 = S3Client.builder().region(region).build();
 
         String bucket = "manager-jar-v2";
+//        String bucket = "worker-jar-v1";
+
         String key = "key";
 
         tutorialSetup(s3, bucket, region);
@@ -27,8 +29,12 @@ public class JarUploader {
         System.out.println("Uploading input file to S3...");
 
         String fileName = "manager.jar";
-        String filePath = "D:/Users/rulid/IdeaProjects/distributed systems course/assignment1/out/artifacts/assignment1_jar/" + fileName;
-// comment1
+        String filePath = "D:\\Users\\rulid\\IdeaProjects\\distributed systems course\\assignment1\\out\\artifacts\\manager\\" + fileName;
+
+//        String fileName = "worker.jar";
+//        String filePath = "C:\\Users\\rulid\\Desktop\\" + fileName;
+
+
         PutObjectRequest request = PutObjectRequest.builder()
                 .bucket(bucket).key(key).acl(ObjectCannedACL.PUBLIC_READ_WRITE).build();
 

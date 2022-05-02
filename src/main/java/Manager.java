@@ -54,6 +54,11 @@ class WorkersStatusChecker extends Thread {
                             }
                             if (instance.state().name().toString().equals("stopped") || instance.state().name().toString().equals("stopping")){
                                 terminateEC2(ec2, instance.instanceId());
+                                try {
+                                    Thread.sleep(5000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
                                 createEC2Instance(ec2, "worker", "ami-04505e74c0741db8d", "role", "worker", "worker-jar-v1");
                             }
                         }
@@ -191,7 +196,7 @@ class LocalAppHandler extends Thread {
                         link_to_output_analyzed_file = s3.utilities().getUrl(request).toExternalForm();
                     }
                     System.out.println("LocalAppHandler: link_to_output_analyzed_file:" + link_to_output_analyzed_file);
-                    output += analysis_type + ":\t" + url_input_file + "\t" + link_to_output_analyzed_file + "\n";
+                    output += analysis_type + ":\t" + url_input_file + "\t" + link_to_output_analyzed_file + "<br>";
                 }
                 if (url_processed_counter == is_url_processed.keySet().size()){
                     is_all_urls_processed = true;
@@ -272,6 +277,11 @@ class LocalAppHandler extends Thread {
         for (int i=0; i < count_of_additional_workers_to_run; i++){
             System.out.println("LocalAppHandler: Creating a worker...");
 //            createEC2Instance(ec2, "worker", "ami-0688ba7eeeeefe3cd", "role", "worker");
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             createEC2Instance(ec2, "worker", "ami-04505e74c0741db8d", "role", "worker", "worker-jar-v1");
             System.out.println("worker created.");
         }

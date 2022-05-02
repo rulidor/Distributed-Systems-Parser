@@ -19,9 +19,9 @@ public class Parser {
 //    parsing_method = wordsAndTags (=POS) or penn (=CONSTITUENCY) or typedDependencies (=DEPENDENCY)
     public static String parse_into_file(String parsing_method, String output_file_path, String input_file_path){
 //        todo: change this debug
-//        String englishPCFG_path = "englishPCFG.ser.gz";
-        String englishPCFG_path = "D:\\Users\\rulid\\stanford parser\\stanford-parser-full-2020-11-17\\englishPCFG.ser.gz";
-        input_file_path = "input_1651354060431.txt";
+        String englishPCFG_path = "englishPCFG.ser.gz";
+//        String englishPCFG_path = "D:\\Users\\rulid\\stanford parser\\stanford-parser-full-2020-11-17\\englishPCFG.ser.gz";
+//        input_file_path = "input_1651354060431.txt";
 
 
 

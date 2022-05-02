@@ -60,9 +60,12 @@ public class EC2 {
     private static String getEC2userDataForWorker(String jar_bucket_name) {
         String userData = "";
         userData += "#!/bin/bash\n";
-        userData += "sudo apt-get update";
-        userData += "sudo apt install default-jre -y";
-        userData += "wget https://www.gutenberg.org/files/1659/1659-0.txt -O a.txt\n"; //todo: put worker jar
+        userData += "sudo apt-get update\n";
+        userData += "sudo apt install default-jre -y\n";
+        userData += "wget https://" + jar_bucket_name + ".s3.amazonaws.com/key -O worker.jar\n"; //todo: put worker jar
+        userData += "cd ..\n";
+        userData += "cd ..\n";
+        userData += "java -jar worker.jar\n";
         String base64UserData = null;
         try {
             base64UserData = new String( Base64.getEncoder().encode(userData.getBytes( "UTF-8" )), "UTF-8" );

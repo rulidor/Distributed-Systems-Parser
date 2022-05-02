@@ -115,7 +115,7 @@ public class Worker {
                 }
 
             } catch (Exception e) {
-                //todo: If an exception occurs, the worker should recover from it, send a message to the manager of
+                //If an exception occurs, the worker should recover from it, send a message to the manager of
                 // the input message that caused the exception together with a short description of the
                 // exception, and continue working on the next message
                 System.out.println("worker: exception: " + e.getMessage());

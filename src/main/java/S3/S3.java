@@ -120,10 +120,15 @@ public class S3 {
 
 
 //    danger - deleting all buckets!
-    public static void DeleteAllBuckets(S3Client s3){
+    public static void DeleteAllBucketsWithoutJars(S3Client s3){
         ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
         ListBucketsResponse listBucketsResponse = s3.listBuckets(listBucketsRequest);
-        listBucketsResponse.buckets().stream().forEach(x -> DeleteBucketCompletely(s3, x.name()));
+        listBucketsResponse.buckets().stream().forEach(x -> DeleteAllBucketsHelper(s3, x.name()));
+    }
+    public static void DeleteAllBucketsHelper(S3Client s3, String bucket){
+        if (bucket.toLowerCase().contains("worker") || bucket.toLowerCase().contains("manager"))
+            return;
+        DeleteBucketCompletely(s3, bucket);
     }
 
 
