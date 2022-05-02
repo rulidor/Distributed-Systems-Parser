@@ -56,7 +56,7 @@ public class EC2 {
 
         ec2.close();
     }
-
+//worker data
     private static String getEC2userDataForWorker(String jar_bucket_name) {
         String userData = "";
         userData += "#!/bin/bash\n";
