@@ -29,6 +29,9 @@ public class Worker {
     private SqsClient sqs = SqsClient.builder().region(Region.US_EAST_1).build();
     private Ec2Client ec2 = Ec2Client.builder().region(Region.US_EAST_1).build();
 
+    private String bucket_from_workers_to_manager = "bucket-from-workers-to-manager";
+    private String bucket_from_manager_to_workers = "bucket-from-manager-to-workers";
+
     public static void main (String[] args){
         Worker worker = new Worker();
         worker.runner();
@@ -68,7 +71,9 @@ public class Worker {
                         case "DEPENDENCY":
                             parsing_method = "typedDependencies";
                     }
+                    System.out.println("parsing...");
                     String res = Parser.parse_into_file(parsing_method,output_file_path, input_file_path);
+                    System.out.println("parsing done.");
 
                     if (! res.toLowerCase().equals("success")){  //case: exception while parsing
                         System.out.println("worker: exception while parsing: " + res);
@@ -82,19 +87,18 @@ public class Worker {
                             case "typedDependencies":
                                 parsing_method = "DEPENDENCY";
                         }
+                        System.out.println("sending exception");
                         SQS.SQS.sendMessage(sqs, queueWorkersToManager, "exception: " + res + "\t" + parsing_method + "\t" + text_url);
                         deleteOneMessage(sqs, queueManagerToWorkers, msg);
                         continue;
                     }
 
 //                    Upload the resulting analysis file to S3
-                    String bucket = "bucket" + System.currentTimeMillis();
-                    String key = "key";
-                    tutorialSetup(s3, bucket, region);
+                    String key = "key" + System.currentTimeMillis();
 
 //uploading a file to the bucket
                     PutObjectRequest request = PutObjectRequest.builder()
-                            .bucket(bucket).acl(String.valueOf(BucketCannedACL.PUBLIC_READ_WRITE)).key(key).build();
+                            .bucket(bucket_from_workers_to_manager).acl(String.valueOf(BucketCannedACL.PUBLIC_READ_WRITE)).key(key).build();
                     s3.putObject(request, RequestBody.fromFile(new File(output_file_path)));
 
                     switch (parsing_method){
@@ -107,8 +111,8 @@ public class Worker {
                         case "typedDependencies":
                             parsing_method = "DEPENDENCY";
                     }
-
-                    SQS.SQS.sendMessage(sqs, queueWorkersToManager, bucket + "\t" + parsing_method + "\t" + text_url);
+                    System.out.println("sending res file");
+                    SQS.SQS.sendMessage(sqs, queueWorkersToManager, key + "\t" + parsing_method + "\t" + text_url);
 
 //                only when finished job or when there is an exception, delete the message
                     deleteOneMessage(sqs, queueManagerToWorkers, msg);
@@ -129,6 +133,7 @@ public class Worker {
                     case "typedDependencies":
                         parsing_method = "DEPENDENCY";
                 }
+                System.out.println("sending exception");
                 SQS.SQS.sendMessage(sqs, queueWorkersToManager, "exception: " + e.getMessage() + "\t" + parsing_method + "\t" + text_url);
                 if (curr_msg != null)
                     deleteOneMessage(sqs, queueManagerToWorkers, curr_msg);

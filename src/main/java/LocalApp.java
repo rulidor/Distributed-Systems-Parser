@@ -16,9 +16,8 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static S3.S3.cleanUp;
-import static S3.S3.tutorialSetup;
 import static EC2.EC2.createEC2Instance;
+import static S3.S3.*;
 import static SQS.SQS.deleteOneMessage;
 import static SQS.SQS.receiveMessages;
 import static java.lang.Thread.sleep;
@@ -72,13 +71,14 @@ public class LocalApp {
 
         System.out.println("local app running...");
 
-        System.out.println("setting up a bucket for input file...");
+//        System.out.println("setting up a bucket for input file...");
         S3Client s3 = S3Client.builder().region(region).build();
 
-        String bucket = "bucket" + System.currentTimeMillis();
-        String key = "key";
+        String bucket = "bucket-from-local-apps-to-manager";
+//        String bucket = "bucket" + System.currentTimeMillis();
+        String key = "key" + System.currentTimeMillis();
 
-        tutorialSetup(s3, bucket, region);
+//        tutorialSetup(s3, bucket, region);
 
         System.out.println("Uploading input file to S3...");
 
@@ -99,7 +99,7 @@ public class LocalApp {
                 .build();
 
         String queueLocalAppsToManager = "https://sqs.us-east-1.amazonaws.com/862438553923/queueLocalAppsToManager";
-        SQS.SQS.sendMessage(sqsClient, queueLocalAppsToManager, bucket + "\t" + n);
+        SQS.SQS.sendMessage(sqsClient, queueLocalAppsToManager, key + "\t" + n);
 
 
 
@@ -114,8 +114,10 @@ public class LocalApp {
 
         System.out.println("Waiting for manager response...");
 
+        String bucket_from_manager = "bucket-from-manager-to-local-apps";
+
 //        repeatedly: sleep for 10 seconds and check for new messages in SQS
-        String res_bucket = "";
+        String res_key = "";
         boolean while_flag = true;
         while(while_flag){
             try {
@@ -128,8 +130,8 @@ public class LocalApp {
 //            msg template from manager to local app:
 //            "<local app bucket>\t<manager output bucket>"
             for (Message msg : messages){
-                if (msg.body().contains(bucket)){
-                    res_bucket = msg.body().split("\\t")[1];
+                if (msg.body().contains(key)){
+                    res_key = msg.body().split("\\t")[1];
                     deleteOneMessage(sqsClient, queueManagerToLocalApps, msg);
                     while_flag = false;
                     break;
@@ -137,12 +139,12 @@ public class LocalApp {
             }
             System.out.print("...");
         }
-        System.out.println("Got a response from manager. Response bucket name: " + res_bucket);
+        System.out.println("Got a response from manager. Response key: " + res_key);
 
         System.out.println("Downloading summary file from S3...");
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(res_bucket)
-                .key(key)
+                .bucket(bucket_from_manager)
+                .key(res_key)
                 .build();
 
         ResponseInputStream<GetObjectResponse> responseInputStream = s3.getObject(getObjectRequest);
@@ -158,8 +160,8 @@ public class LocalApp {
         System.out.println("Manager response content:");
         System.out.println(res_content);
 
-        System.out.println("Deleting response bucket...");
-        cleanUp(s3, bucket, key);
+        System.out.println("Deleting response key from bucket...");
+        deleteBucketObjects(s3, bucket_from_manager, res_key);
         System.out.println("Deleting completed.");
 
 //        create html output file
@@ -183,12 +185,15 @@ public class LocalApp {
         }
 
         if (terminate == true){
+            System.out.println("Local app sending a terminate message to manager...");
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             SQS.SQS.sendMessage(sqsClient, queueLocalAppsToManager, "terminate");
+            System.out.println("Terminate message sent.");
+
         }
 
         System.out.println("Local app finished - exits.");

@@ -2,6 +2,7 @@ package S3;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -162,6 +163,24 @@ public class S3 {
             System.err.println(e.awsErrorDetails().errorMessage());
             System.exit(1);
         }
+    }
+
+    public static void deleteBucketObjects(S3Client s3, String bucketName, String objectName) {
+
+        ArrayList<ObjectIdentifier> toDelete = new ArrayList<ObjectIdentifier>();
+        toDelete.add(ObjectIdentifier.builder().key(objectName).build());
+
+        try {
+            DeleteObjectsRequest dor = DeleteObjectsRequest.builder()
+                    .bucket(bucketName)
+                    .delete(Delete.builder().objects(toDelete).build())
+                    .build();
+            s3.deleteObjects(dor);
+        } catch (S3Exception e) {
+            System.err.println(e.awsErrorDetails().errorMessage());
+            System.exit(1);
+        }
+        System.out.println("Done!");
     }
 
 

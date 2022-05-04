@@ -318,8 +318,7 @@ public class EC2 {
                 System.out.println("The ID of the terminated instance is "+sc.instanceId());
             }
         } catch (Ec2Exception e) {
-            System.err.println(e.awsErrorDetails().errorMessage());
-            System.exit(1);
+            System.err.println("terminateEC2: " + e.awsErrorDetails().errorMessage());
         }
     }
 

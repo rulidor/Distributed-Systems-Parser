@@ -42,6 +42,7 @@ class WorkersStatusChecker extends Thread {
             String nextToken = null;
             try {
                 do {
+                    System.out.println("WorkersStatusChecker checking workers...");
                     DescribeInstancesRequest request = DescribeInstancesRequest.builder().maxResults(6).nextToken(nextToken).build();
                     DescribeInstancesResponse response = ec2.describeInstances(request);
 
@@ -52,7 +53,8 @@ class WorkersStatusChecker extends Thread {
                             if (instance.state().name().toString().equals("terminated")){
                                 continue;
                             }
-                            if (instance.state().name().toString().equals("stopped") || instance.state().name().toString().equals("stopping")){
+                            if (instance.state().name().toString().equals("stopped")){
+                                System.out.println("WorkersStatusChecker: found a stopped worker. creating a new one");
                                 terminateEC2(ec2, instance.instanceId());
                                 try {
                                     Thread.sleep(5000);
@@ -60,6 +62,7 @@ class WorkersStatusChecker extends Thread {
                                     e.printStackTrace();
                                 }
                                 createEC2Instance(ec2, "worker", "ami-04505e74c0741db8d", "role", "worker", "worker-jar-v1");
+                                System.out.println("WorkersStatusChecker: created a new worker");
                             }
                         }
                     }
@@ -114,8 +117,15 @@ class LocalAppHandler extends Thread {
 //    private Region region = Region.US_WEST_2;
     private Region region = Region.US_EAST_1;
     private Map<String, Boolean> is_url_processed = new HashMap<>();
+
+    private String bucket_from_local_apps;
+    private String bucket_to_local_apps;
+    private String bucket_from_workers;
+    private String bucket_to_workers;
+
     public LocalAppHandler(Message msg, Manager manager, S3Client s3, SqsClient sqsClient, Ec2Client ec2,
-                           String queueManagerToLocalApps, String queueManagerToWorkers, String queueWorkersToManager){
+                           String queueManagerToLocalApps, String queueManagerToWorkers, String queueWorkersToManager,
+                           String bucket_from_local_apps, String bucket_to_local_apps, String bucket_from_workers, String bucket_to_workers){
         this.msg = msg;
         this.manager = manager;
         this.s3 = s3;
@@ -124,6 +134,10 @@ class LocalAppHandler extends Thread {
         this.queueManagerToWorkers = queueManagerToWorkers;
         this.queueWorkersToManager = queueWorkersToManager;
         this.ec2 = ec2;
+        this.bucket_from_local_apps = bucket_from_local_apps;
+        this.bucket_to_local_apps = bucket_to_local_apps;
+        this.bucket_from_workers = bucket_from_workers;
+        this.bucket_to_workers = bucket_to_workers;
     }
     public void run() {
         System.out.println("LocalAppHandler running");
@@ -133,12 +147,12 @@ class LocalAppHandler extends Thread {
             manager.terminate();
             return;
         }
-        String input_file_bucket = msg_content.split("\\t")[0];
+        String input_file_key = msg_content.split("\\t")[0];
         int n = Integer.parseInt(msg_content.split("\\t")[1]); // workers’ files ratio (max files per worker)
 //        int n = 5;
 
-        System.out.println("LocalAppHandler Downloading input file from S3 bucket: " + msg_content);
-        String res_content = get_content_from_bucket(input_file_bucket);
+        System.out.println("LocalAppHandler Downloading input file from S3 bucket " + bucket_from_local_apps + " with key: " + input_file_key);
+        String res_content = get_content_from_bucket(bucket_from_local_apps, input_file_key);
         System.out.println("LocalAppHandler: input file contains:\n" + res_content);
 
 //        Creates an SQS message for each URL in the input file together with the operation
@@ -178,7 +192,7 @@ class LocalAppHandler extends Thread {
                 System.out.println("LocalAppHandler: received a message from a worker.");
                 System.out.println("LocalAppHandler: msg body: " + msg.body());
                 String[] msg_splitted = msg.body().split("\\t");
-                String bucket_of_analysis_output = msg_splitted[0];
+                String key_of_analysis_output = msg_splitted[0];
                 String analysis_type = msg_splitted[1];
                 String url_input_file = msg_splitted[2];
                 if (is_url_processed.keySet().contains(analysis_type + "\t" + url_input_file)
@@ -187,12 +201,11 @@ class LocalAppHandler extends Thread {
                     deleteOneMessage(sqsClient, queueWorkersToManager, msg);
                     url_processed_counter ++;
                     String link_to_output_analyzed_file = "";
-                    if (bucket_of_analysis_output.toLowerCase().contains("exception:"))
-                        link_to_output_analyzed_file = bucket_of_analysis_output;
+                    if (key_of_analysis_output.toLowerCase().contains("exception:"))
+                        link_to_output_analyzed_file = key_of_analysis_output;
                     else {
                     // inserting the output file url to the summary file
-//                        link_to_output_analyzed_file = get_content_from_bucket(bucket_of_analysis_output);
-                        GetUrlRequest request = GetUrlRequest.builder().bucket(bucket_of_analysis_output).key("key").build();
+                        GetUrlRequest request = GetUrlRequest.builder().bucket(bucket_from_workers).key(key_of_analysis_output).build();
                         link_to_output_analyzed_file = s3.utilities().getUrl(request).toExternalForm();
                     }
                     System.out.println("LocalAppHandler: link_to_output_analyzed_file:" + link_to_output_analyzed_file);
@@ -207,16 +220,14 @@ class LocalAppHandler extends Thread {
         }
 
 //        uploading output to S3
-        String bucket_of_response = "bucket" + System.currentTimeMillis();
-        String key = "key";
-        tutorialSetup(bucket_of_response);
-        s3.putObject(PutObjectRequest.builder().bucket(bucket_of_response).key(key)
+        String key = "key" + System.currentTimeMillis();
+        s3.putObject(PutObjectRequest.builder().bucket(bucket_to_local_apps).key(key)
                         .build(),
                 RequestBody.fromString(output));
         System.out.println("LocalAppHandler: output is: " + output);
 
 //        send msg to local app via SQS
-        SQS.SQS.sendMessage(sqsClient, queueManagerToLocalApps, input_file_bucket + "\t" + bucket_of_response);
+        SQS.SQS.sendMessage(sqsClient, queueManagerToLocalApps, input_file_key + "\t" + key);
 
 
     }
@@ -338,8 +349,7 @@ class LocalAppHandler extends Thread {
                 System.out.println("The ID of the terminated instance is "+sc.instanceId());
             }
         } catch (Ec2Exception e) {
-            System.err.println(e.awsErrorDetails().errorMessage());
-            System.exit(1);
+            System.err.println("terminateEC2: " + e.awsErrorDetails().errorMessage());
         }
     }
 
@@ -367,10 +377,10 @@ class LocalAppHandler extends Thread {
         return false;
     }
 
-    private String get_content_from_bucket(String bucket){
+    private String get_content_from_bucket(String bucket, String key){
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucket)
-                .key("key")
+                .key(key)
                 .build();
 
         ResponseInputStream<GetObjectResponse> responseInputStream = s3.getObject(getObjectRequest);
@@ -398,6 +408,11 @@ public class Manager {
     private String queueManagerToLocalApps = "https://sqs.us-east-1.amazonaws.com/862438553923/queueManagerToLocalApps";
     private String queueManagerToWorkers = "https://sqs.us-east-1.amazonaws.com/862438553923/queueManagerToWorkers";
     private String queueWorkersToManager = "https://sqs.us-east-1.amazonaws.com/862438553923/queueWorkersToManager";
+    private String bucket_from_local_apps = "bucket-from-local-apps-to-manager";
+    private String bucket_from_workers = "bucket-from-workers-to-manager";
+    private String bucket_to_local_apps = "bucket-from-manager-to-local-apps";
+    private String bucket_to_workers = "bucket-from-manager-to-workers";
+
 
 
     public void runner() {
@@ -430,12 +445,10 @@ public class Manager {
                 if (handledMessages.contains(msg))
                     continue;
 //                creates a new thread for every local app request
-                LocalAppHandler localAppHandler = new LocalAppHandler(msg, this, s3, sqs, ec2, queueManagerToLocalApps, queueManagerToWorkers, queueWorkersToManager);
+                LocalAppHandler localAppHandler = new LocalAppHandler(msg, this, s3, sqs, ec2, queueManagerToLocalApps, queueManagerToWorkers, queueWorkersToManager, bucket_from_local_apps, bucket_to_local_apps, bucket_from_workers, bucket_to_workers);
                 System.out.println("manager running a local app handler.");
-//                localAppHandler.run();
                 localAppHandler.start();
                 if (is_WorkersStatusChecker_running == false){
-//                    workersStatusChecker.run();
                     workersStatusChecker.start();
                     handlers.add(workersStatusChecker);
                     is_WorkersStatusChecker_running = true;
@@ -460,7 +473,8 @@ public class Manager {
         String active_manager_id = terminate_all_workers(ec2);
 
 //        terminate manager
-        terminateEC2(ec2, active_manager_id);
+        if (!active_manager_id.equals(""))
+            terminateEC2(ec2, active_manager_id);
 
     }
 
@@ -496,8 +510,7 @@ public class Manager {
                 System.out.println("The ID of the terminated instance is "+sc.instanceId());
             }
         } catch (Ec2Exception e) {
-            System.err.println(e.awsErrorDetails().errorMessage());
-            System.exit(1);
+            System.err.println("terminateEC2: " + e.awsErrorDetails().errorMessage());
         }
     }
 
