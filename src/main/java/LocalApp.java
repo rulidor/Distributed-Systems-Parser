@@ -1,6 +1,3 @@
-//try this ami:
-//ami-04505e74c0741db8d
-
 import EC2.EC2;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -29,9 +26,46 @@ import static java.lang.Thread.sleep;
 public class LocalApp {
 
     public static void main(String[] args) {
-        //todo: update according to args
-        int n = 1; // workers’ files ratio (max files per worker)
+// usage: java -jar localApp.jar input-sample2.txt out1.html 1
+
+//        handling args
+        final String USAGE = "\n" +
+                "Usage:\n" +
+                "   <inputFileName> <outputFileName> <n> [terminate]\n\n" +
+                "Where:\n" +
+                "   inputFileName - name of the input file. \n\n" +
+                "   outputFileName - name of the output html file. \n\n" +
+                "   n - workers files ratio (max files per worker)." +
+                "   terminate - indicates that the application should terminate the manager at the end.";
+
+        if (args.length < 3) {
+            System.out.println(USAGE);
+            System.exit(1);
+        }
+
+        int n = 2;
+        try {
+            n = Integer.parseInt(args[2]);
+            if (n <= 0){
+                System.out.println("n cannot be <= 0. exiting.");
+                System.exit(1);
+            }
+        }
+        catch (NumberFormatException e) {
+            System.out.println("n is not a number. exiting.");
+            System.exit(1);
+        }
+
         boolean terminate = false;
+        if (args.length == 4){
+            if (args[3].toLowerCase().equals("terminate")){
+                System.out.println("local app received a termination command.");
+                terminate = true;
+            }
+        }
+
+//        end of handling args
+
 
 //        Region region = Region.US_WEST_2;
         Region region = Region.US_EAST_1;
@@ -49,13 +83,12 @@ public class LocalApp {
         System.out.println("Uploading input file to S3...");
 
 //uploading a file to the bucket
-        String fileName = "input-sample2.txt"; //todo change
-        String filePath = "" + fileName;
+        String inputFilePath = args[0];
 
         PutObjectRequest request = PutObjectRequest.builder()
                 .bucket(bucket).acl(String.valueOf(BucketCannedACL.PUBLIC_READ_WRITE)).key(key).build();
 
-        s3.putObject(request, RequestBody.fromFile(new File(filePath)));
+        s3.putObject(request, RequestBody.fromFile(new File(inputFilePath)));
 
         System.out.println("Upload complete.");
 
@@ -67,6 +100,10 @@ public class LocalApp {
 
         String queueLocalAppsToManager = "https://sqs.us-east-1.amazonaws.com/862438553923/queueLocalAppsToManager";
         SQS.SQS.sendMessage(sqsClient, queueLocalAppsToManager, bucket + "\t" + n);
+
+
+
+
 
 //checking if there is an active manager
         Ec2Client ec2 = Ec2Client.builder()
@@ -82,7 +119,7 @@ public class LocalApp {
         boolean while_flag = true;
         while(while_flag){
             try {
-                Thread.sleep(10000);
+                Thread.sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -128,11 +165,13 @@ public class LocalApp {
 //        create html output file
         System.out.println("Creates HTML output file...");
         try {
-            String output_filename = "output" +  System.currentTimeMillis() + ".html";
-            File myObj = new File(output_filename);
+            String outputFilePath = args[1];
+            if (!outputFilePath.toLowerCase().contains(".html"))
+                outputFilePath += ".html";
+            File myObj = new File(outputFilePath);
             if (myObj.createNewFile()) {
                 System.out.println("File created: " + myObj.getName());
-                FileWriter myWriter = new FileWriter(output_filename);
+                FileWriter myWriter = new FileWriter(outputFilePath);
                 myWriter.write("<html><head><title>output file</title></head><body>" + res_content + "</body></html>");
                 myWriter.close();
             } else {
@@ -143,7 +182,12 @@ public class LocalApp {
             e.printStackTrace();
         }
 
-        if(terminate == true){
+        if (terminate == true){
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             SQS.SQS.sendMessage(sqsClient, queueLocalAppsToManager, "terminate");
         }
 
@@ -188,19 +232,19 @@ public class LocalApp {
                             continue;
                         System.out.println("Manager: Instance Id is " + instance.instanceId());
                         System.out.println("Instance state name is "+  instance.state().name());
-                        if (instance.state().name().toString().equals("terminated")){
-                            continue;
+                        if ( instance.state().name().toString().equals("pending") || instance.state().name().toString().equals("running")){
+                            System.out.println("There is an active manager.");
+                            return;
                         }
-                        if (instance.state().name().toString().equals("stopped") || instance.state().name().toString().equals("stopping")){
-                            System.out.print("Starting manager...");
-                            StartInstancesRequest start_request = StartInstancesRequest.builder()
-                                    .instanceIds(instance.instanceId())
-                                    .build();
-                            ec2.startInstances(start_request);
-                            System.out.println("Manager started.");
-                        }
-                        System.out.println("There is an active manager.");
-                        return;
+//                        if (instance.state().name().toString().equals("stopped") || instance.state().name().toString().equals("stopping")){
+//                            System.out.print("Starting manager...");
+//                            StartInstancesRequest start_request = StartInstancesRequest.builder()
+//                                    .instanceIds(instance.instanceId())
+//                                    .build();
+//                            ec2.startInstances(start_request);
+//                            System.out.println("Manager started.");
+//                            return;
+//                        }
                     }
                 }
                 nextToken = response.nextToken();

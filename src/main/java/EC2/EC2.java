@@ -164,68 +164,6 @@ public class EC2 {
         return "";
     }
 
-//    todo: fix
-//    public static String createEC2ManagerInstance(Ec2Client ec2,String name, String amiId, String tagKey, String tagValue) {
-//        IamInstanceProfileSpecification iamInstanceProfile = IamInstanceProfileSpecification.builder()
-//                .name("LabInstanceProfile")
-//                .build();
-//
-//        RunInstancesRequest runRequest = RunInstancesRequest.builder()
-//                .imageId("ami-0ed9277fb7eb570c9")
-//                .instanceType(InstanceType.T1_MICRO)
-//                .maxCount(1)
-//                .minCount(1)
-//                .keyName("Management")
-//                .userData(encodedUserData)
-//                .securityGroups(securityGroups)
-//                .iamInstanceProfile(iamInstanceProfile)
-//                .tagSpecifications(myTags)
-//                .build();
-//
-//        RunInstancesResponse response = ec2.runInstances(runRequest);
-//        String instanceId = response.instances().get(0).instanceId();
-//
-//        Tag tag = Tag.builder()
-//                .key("Name")
-//                .value(name)
-//                .build();
-//
-//        CreateTagsRequest tagRequest1 = CreateTagsRequest.builder()
-//                .resources(instanceId)
-//                .tags(tag)
-//                .build();
-//
-//        tag = Tag.builder()
-//                .key(tagKey)
-//                .value(tagValue)
-//                .build();
-//
-//        CreateTagsRequest tagRequest2 = CreateTagsRequest.builder()
-//                .resources(instanceId)
-//                .tags(tag)
-//                .build();
-//
-//        ec2.createTags(tagRequest1);
-//        ec2.createTags(tagRequest2);
-//
-//
-//        try {
-//            ec2.createTags(tagRequest1);
-//            ec2.createTags(tagRequest2);
-//            System.out.printf(
-//                    "Successfully started EC2 Instance %s based on AMI %s",
-//                    instanceId, amiId);
-//
-//            return instanceId;
-//
-//        } catch (Ec2Exception e) {
-//            System.err.println(e.awsErrorDetails().errorMessage());
-//            System.exit(1);
-//        }
-//
-//        return "";
-//    }
-
     public static void describeEC2Instances( Ec2Client ec2){
 
         boolean done = false;

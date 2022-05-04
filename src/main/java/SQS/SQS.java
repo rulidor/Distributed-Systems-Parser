@@ -1,10 +1,5 @@
 package SQS;
 
-
-import com.amazonaws.services.sqs.model.DeleteQueueResult;
-import com.amazonaws.services.sqs.*;
-
-
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;

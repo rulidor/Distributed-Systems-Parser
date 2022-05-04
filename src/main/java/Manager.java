@@ -421,7 +421,7 @@ public class Manager {
         WorkersStatusChecker workersStatusChecker = new WorkersStatusChecker(ec2);
         while(terminateManager == false){
             try {
-                Thread.sleep(4000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -542,6 +542,8 @@ public class Manager {
 
             DescribeTagsResponse describeTagsResponse = ec2.describeTags(DescribeTagsRequest.builder().filters(filter).build());
             List<TagDescription> tags = describeTagsResponse.tags();
+            if (tags.size() == 0)
+                return true; //sometimes, workers created without a tag name, for some reason.
             for (TagDescription tag: tags) {
                 if(tag.key().toLowerCase().equals(key) && tag.value().toLowerCase().equals(value))
                     return true;
