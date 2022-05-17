@@ -66,8 +66,8 @@ If there is an exception during the worker's parsing work (whether because the u
      <br>&ensp;B. Terminates to WorkersStatusChecker (the thread that is responsible for making sure the worker instances are correct and working, and if not - makes them terminate and creates new workers).
      <br>&ensp;C. Waiting for the local apps' requests to be processed by localAppHandlers already created.
      <br>&ensp;D. Terminate operation for all workers.
-          <br>&ensp;&ensp;- If there are any messages left in the queueWorkersToManager, delete them.
-          <br>&ensp;&ensp;- Termiates itself.
+          <br>&emsp;- If there are any messages left in the queueWorkersToManager, delete them.
+          <br>&emsp;- Termiates itself.
      
     
    
