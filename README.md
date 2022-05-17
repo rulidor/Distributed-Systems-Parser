@@ -62,10 +62,10 @@ Persistence - If a worker instance goes from running to stopped, the manager has
 If there is an exception during the worker's parsing work (whether because the url of the input text is invalid, or if there is a fault in the parser) - the worker does not "fall", but sends the reason for the exception to manager.
 3. Running several local apps at the same time - we tried it and indeed it works and the appropriate output files are obtained.
 4. Termination process - When the local app sends a terminate message to the manager, the manager:
-     &ensp; A. Stops receiving more file processing requests from local apps.
-     B. Terminates to WorkersStatusChecker (the thread that is responsible for making sure the worker instances are correct and working, and if not - makes them terminate and creates new workers).
-     C. Waiting for the local apps' requests to be processed by localAppHandlers already created.
-     D. Terminate operation for all workers.
+     <br>&ensp;A. Stops receiving more file processing requests from local apps.
+     <br>&ensp;B. Terminates to WorkersStatusChecker (the thread that is responsible for making sure the worker instances are correct and working, and if not - makes them terminate and creates new workers).
+     <br>&ensp;C. Waiting for the local apps' requests to be processed by localAppHandlers already created.
+     <br>&ensp;D. Terminate operation for all workers.
           - If there are any messages left in the queueWorkersToManager, delete them.
           - Termiates itself.
      
