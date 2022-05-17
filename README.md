@@ -4,8 +4,8 @@ An AWS application to distributively process a list of text files, analyze them 
 ### system startup:
 in order to run the system you should:
 1. Put the jar file named LocalApp.jar in the folder, along with the input file.
-# 2. The local app must be run via the cmd/terminal, using:
-    java -jar LocalApp.jar <inputFileName> <outputFileName> <n>> terminate>
+2. The local app must be run via the cmd/terminal, using:
+###    java -jar LocalApp.jar <inputFileName> <outputFileName> <n>> terminate>
      
 ### usage:
       inputFileName - name of the input file (with .txt extension).
