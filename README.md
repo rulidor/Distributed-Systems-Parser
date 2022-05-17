@@ -16,15 +16,16 @@ in order to run the system you should:
     
 ### example run and work flow:    
 The command used to run the localapp:
-#
+###
      java -jar LocalApp.jar input-sample.txt out1.html 1 terminate
-Initial data::
-1. Run 1 local app
-2. There is no active manager
-3. n = 1
-4. Input file:
-A. input-sample.txt, as provided in the model
-B. The number of urls in the input file: 9
+Initial data:
+###
+     1. Run 1 local app
+     2. There is no active manager
+     3. n = 1
+     4. Input file:
+          A. input-sample.txt
+          B. The number of urls in the input file: 9
 During system work, the local app produces a manager if there is no active manager.
 The manager checks how many workers are required to work on the input file (s), and produces workers accordingly.
 Manager, workers jar files are in S3.
