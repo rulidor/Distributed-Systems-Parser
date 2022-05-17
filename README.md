@@ -33,7 +33,7 @@ The manager and workers download the manager, worker, and run them at the beginn
 When a request is received to process an input file from a local app to a manager, the manager assigns a LocalAppHandler which is basically a thread that handles the input file and is responsible for the workers processing the file.
 If there is a worker instance whose state has for some reason changed from running to stopped, the manager has a show of WorkerStatuschecker, which is basically a thread responsible for checking these things, and he will terminate the worker and then create a new worker and run it.
 We created EC2 instances: one manager and 9 workers:
- 
+ ![alt text](https://raw.githubusercontent.com/rulidor/Distributed-Systems-Parser/main/docs/instances%20at%20start.png)
 Our EC2 Instances type:
 ami-04505e74c0741db8d
 Type
