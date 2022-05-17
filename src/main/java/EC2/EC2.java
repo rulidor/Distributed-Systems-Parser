@@ -113,7 +113,7 @@ public class EC2 {
 
         RunInstancesRequest runRequest = RunInstancesRequest.builder()
                 .imageId(amiId)
-                .instanceType(InstanceType.T1_MICRO)
+                .instanceType(InstanceType.T2_SMALL)
                 .maxCount(1)
                 .minCount(1)
                 .userData(user_data)

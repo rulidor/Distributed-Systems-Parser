@@ -122,7 +122,7 @@ public class SQS {
             // snippet-start:[sqs.java2.sqs_example.retrieve_messages]
             ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
                     .queueUrl(queueUrl)
-                    .maxNumberOfMessages(messagesNumber)
+                    .maxNumberOfMessages(messagesNumber).visibilityTimeout(60 * 10)
                     .build();
             List<Message> messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
             return messages;

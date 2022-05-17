@@ -19,8 +19,8 @@ public class JarUploader {
         System.out.println("setting up a bucket...");
         S3Client s3 = S3Client.builder().region(region).build();
 
-//        String bucket = "manager-jar-v2";
-        String bucket = "worker-jar-v1";
+        String bucket = "manager-jar-v2";
+//        String bucket = "worker-jar-v1";
 
         String key = "key";
 
@@ -28,11 +28,11 @@ public class JarUploader {
 
         System.out.println("Uploading input file to S3...");
 
-//        String fileName = "manager.jar";
-//        String filePath = "D:\\Users\\rulid\\IdeaProjects\\distributed systems course\\assignment1\\out\\artifacts\\manager\\" + fileName;
+        String fileName = "manager.jar";
+        String filePath = "D:\\Users\\rulid\\IdeaProjects\\distributed systems course\\assignment1\\out\\artifacts\\manager\\" + fileName;
 
-        String fileName = "worker.jar";
-        String filePath = "D:\\Users\\rulid\\IdeaProjects\\distributed systems course\\assignment1\\out\\artifacts\\worker\\" + fileName;
+//        String fileName = "worker.jar";
+//        String filePath = "D:\\Users\\rulid\\IdeaProjects\\distributed systems course\\assignment1\\out\\artifacts\\worker\\" + fileName;
 
 
         PutObjectRequest request = PutObjectRequest.builder()

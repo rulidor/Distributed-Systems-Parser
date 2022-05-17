@@ -8,6 +8,7 @@ import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SqsException;
 
 import java.io.ByteArrayInputStream;
@@ -187,7 +188,7 @@ class LocalAppHandler extends Thread {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            List<Message> messages = receiveMessages(sqsClient, queueWorkersToManager, 10);
+            List<Message> messages = receiveMessagesAndSetVisibility(sqsClient, queueWorkersToManager, 4, 20);
             for (Message msg : messages){
                 System.out.println("LocalAppHandler: received a message from a worker.");
                 System.out.println("LocalAppHandler: msg body: " + msg.body());
@@ -195,6 +196,10 @@ class LocalAppHandler extends Thread {
                 String key_of_analysis_output = msg_splitted[0];
                 String analysis_type = msg_splitted[1];
                 String url_input_file = msg_splitted[2];
+                if (is_url_processed.keySet().contains(analysis_type + "\t" + url_input_file)
+                        && is_url_processed.get(analysis_type + "\t" + url_input_file) == true){
+                    deleteOneMessage(sqsClient, queueWorkersToManager, msg);
+                }
                 if (is_url_processed.keySet().contains(analysis_type + "\t" + url_input_file)
                             && is_url_processed.get(analysis_type + "\t" + url_input_file) == false){
                     is_url_processed.put(analysis_type + "\t" + url_input_file, true);
@@ -229,7 +234,21 @@ class LocalAppHandler extends Thread {
 //        send msg to local app via SQS
         SQS.SQS.sendMessage(sqsClient, queueManagerToLocalApps, input_file_key + "\t" + key);
 
-
+    }
+    public static  List<Message> receiveMessagesAndSetVisibility(SqsClient sqsClient, String queueUrl, int messagesNumber, int visibility_timeout) {
+        try {
+            // snippet-start:[sqs.java2.sqs_example.retrieve_messages]
+            ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
+                    .queueUrl(queueUrl)
+                    .maxNumberOfMessages(messagesNumber).visibilityTimeout(visibility_timeout)
+                    .build();
+            List<Message> messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
+            return messages;
+        } catch (SqsException e) {
+            System.err.println(e.awsErrorDetails().errorMessage());
+            System.exit(1);
+        }
+        return null;
     }
 
     public static void deleteOneMessage(SqsClient sqsClient, String queueUrl,  Message message) {
@@ -471,6 +490,20 @@ public class Manager {
         }
 //        terminate all workers
         String active_manager_id = terminate_all_workers(ec2);
+
+//        delete all remaining messages in queueWorkersToManager
+        try {
+            Thread.sleep(20000); // wait until messages in queueWorkersToManager are visible
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        List<Message> messages = LocalAppHandler.receiveMessagesAndSetVisibility(sqs, queueWorkersToManager, 10, 60*10);
+        while(messages.size() > 0){
+            for (Message msg : messages){
+                deleteOneMessage(sqs, queueWorkersToManager, msg);
+            }
+            messages = LocalAppHandler.receiveMessagesAndSetVisibility(sqs, queueWorkersToManager, 10, 60*10);
+        }
 
 //        terminate manager
         if (!active_manager_id.equals(""))
