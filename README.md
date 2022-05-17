@@ -26,37 +26,39 @@ Initial information:
      4. Input file:
           A. input-sample.txt
           B. The number of urls in the input file: 9
-During system work, the local app produces a manager if there is no active manager.
-The manager checks how many workers are required to work on the input file (s), and produces workers accordingly.
-Manager, workers jar files are in S3.
-The manager and workers download the manager, worker, and run them at the beginning of their instance run.
-When a request is received to process an input file from a local app to a manager, the manager assigns a LocalAppHandler which is basically a thread that handles the input file and is responsible for the workers processing the file.
-If there is a worker instance whose state has for some reason changed from running to stopped, the manager has a show of WorkerStatuschecker, which is basically a thread responsible for checking these things, and he will terminate the worker and then create a new worker and run it.
-We created EC2 instances: one manager and 9 workers:
- ![alt text](https://raw.githubusercontent.com/rulidor/Distributed-Systems-Parser/main/docs/instances%20at%20start.png)
+During system work, the local app produces a manager if there is no active manager.<br>
+The manager checks how many workers are required to work on the input file (s), and produces workers accordingly.<br>
+Manager, workers jar files are in S3.<br>
+The manager and workers download the manager, worker, and run them at the beginning of their instance run.<br>
+When a request is received to process an input file from a local app to a manager, the manager assigns a LocalAppHandler which is basically a thread that handles the input file and is responsible for the workers processing the file.<br>
+If there is a worker instance whose state has for some reason changed from running to stopped, the manager has a show of WorkerStatuschecker, which is basically a thread responsible for checking these things, and he will terminate the worker and then create a new worker and run it.<br>
+We created EC2 instances: one manager and 9 workers:<br>
+![alt text](https://raw.githubusercontent.com/rulidor/Distributed-Systems-Parser/main/docs/instances%20at%20start.png)
+ <br><br>
 Our EC2 Instances type:
 ami-04505e74c0741db8d
-Type
-T2_SMALL
+Type: T2_SMALL
 
-
-
-
-The EC2 instances communicate using 4 sqs queues:
- 
-When the files created by the workers and local apps are uploaded to S3 and are, according to their suitability, in one of the following 4 Buckets:
- 
-
-The time it took for the output file to be ready: 37 minutes.
-The n we used: 1.
-The output file contained:
+<br><br>
+The EC2 instances communicate using 4 sqs queues:<br>
+![alt text](https://github.com/rulidor/Distributed-Systems-Parser/blob/main/docs/sqs%20queues.png?raw=true)
+ <br><br>
+When the files created by the workers and local apps are uploaded to S3 and are, according to their suitability, in one of the following 4 Buckets:<br>
+![alt text](https://github.com/rulidor/Distributed-Systems-Parser/blob/main/docs/buckets.png?raw=true)
+<br><br>
  
 
+The time it took for the output file to be ready: 37 minutes. <br>
+The n we used: 1.<br>
+The output file contained:<br>
+![alt text](https://github.com/rulidor/Distributed-Systems-Parser/blob/main/docs/output.png?raw=true)
+<br><br>
 
-At the end of the run and because we used the terminate parameter, the EC2 instances we created are now terminated:
- 
+At the end of the run and because we used the terminate parameter, the EC2 instances we created are now terminated:<br>
+![alt text](https://github.com/rulidor/Distributed-Systems-Parser/blob/main/docs/instances%20at%20end%20of%20run.png?raw=true)
+<br><br>
 
-Additional points:
+Additional points:<br>
 1. Scalability - Our system is scalable, as the manager constantly checks for new requests from local apps, and if so, he assigns a new thread to each such request that handles the request.
 Persistence - If a worker instance goes from running to stopped, the manager has the thread called WorkerStatuschecker, which once in a while checks exactly these situations, and passes the stopped worker to terminate, and instead produces a new worker .
 If there is an exception during the worker's parsing work (whether because the url of the input text is invalid, or if there is a fault in the parser) - the worker does not "fall", but sends the reason for the exception to manager.
