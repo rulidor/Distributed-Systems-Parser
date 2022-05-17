@@ -7,7 +7,7 @@ An AWS application to distributively process a list of text files, analyze them 
     >2. The local app must be run via the cmd/terminal, using:
         java -jar LocalApp.jar <inputFileName> <outputFileName> <n>> terminate>
      
-    Where usage is:
+### usage:
       inputFileName - name of the input file (with .txt extension).
       outputFileName - name of the output html file. (with .html extension).
       n - workers files ratio (max files per worker).
