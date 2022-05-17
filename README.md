@@ -18,7 +18,7 @@ in order to run the system you should:
 The command used to run the localapp:
 ###
      java -jar LocalApp.jar input-sample.txt out1.html 1 terminate
-Initial data:
+Initial information:
 ###
      1. Run 1 local app
      2. There is no active manager
