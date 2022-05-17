@@ -35,9 +35,9 @@ If there is a worker instance whose state has for some reason changed from runni
 We created EC2 instances: one manager and 9 workers:<br>
 ![alt text](https://raw.githubusercontent.com/rulidor/Distributed-Systems-Parser/main/docs/instances%20at%20start.png)
  <br><br>
-Our EC2 Instances type:
-ami-04505e74c0741db8d
-Type: T2_SMALL
+Our EC2 Instances type:<br>
+&ensp;ami-04505e74c0741db8d<br>
+&ensp;Type: T2_SMALL<br>
 
 <br><br>
 The EC2 instances communicate using 4 sqs queues:<br>
