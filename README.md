@@ -14,7 +14,7 @@ in order to run the system you should:
       n - workers files ratio (max files per worker).
       terminate - optional parameter, which indicates whether or not the application should terminate the manager at the end.
     
-### example run and work flow:    
+### example run and workflow:    
 The command used to run the localapp:
 ###
      java -jar LocalApp.jar input-sample.txt out1.html 1 terminate
