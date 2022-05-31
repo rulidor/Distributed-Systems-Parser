@@ -6,11 +6,11 @@ in order to run the system you should:
 1. Put the jar file named LocalApp.jar in the folder, along with the input file.
 2. The local app must be run via the cmd/terminal, using:
 ###
-     java -jar LocalApp.jar <inputFileName> <outputFileName> <n> <terminate>
+     java -jar LocalApp.jar <inputFilePath> <outputFilePath> <n> <terminate>
      
 ### usage:
-      inputFileName - name of the input file (with .txt extension).
-      outputFileName - name of the output html file. (with .html extension).
+      inputFileName - path of the input file (with .txt extension).
+      outputFileName - path of the output html file. (with .html extension).
       n - workers files ratio (max files per worker).
       terminate - optional parameter, which indicates whether or not the application should terminate the manager at the end.
     
