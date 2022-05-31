@@ -9,8 +9,8 @@ in order to run the system you should:
      java -jar LocalApp.jar <inputFilePath> <outputFilePath> <n> <terminate>
      
 ### usage:
-      inputFileName - path of the input file (with .txt extension).
-      outputFileName - path of the output html file. (with .html extension).
+      inputFilePath - path of the input file (with .txt extension).
+      outputFilePath - path of the output html file. (with .html extension).
       n - workers files ratio (max files per worker).
       terminate - optional parameter, which indicates whether or not the application should terminate the manager at the end.
     
